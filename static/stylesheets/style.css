@@ -259,16 +259,17 @@ nav + .container {
   position: relative;
 }
 
-#messages .message-link {
+#messages #message-link {
   position: absolute;
-  top: 0;
+  top: 3;
   bottom: 0;
   left: 0;
   right: 0;
   z-index: 1;
+  width: 60px;
 }
 
-#messages .list-group-item a:not(.message-link) {
+#messages .list-group-item a:not(#message-link) {
   position: relative;
   z-index: 2;
 }
