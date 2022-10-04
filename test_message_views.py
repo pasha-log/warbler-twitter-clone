@@ -1,3 +1,9 @@
+# When you’re logged in, can you add a message as yourself?
+# When you’re logged in, can you delete a message as yourself?
+# When you’re logged out, are you prohibited from adding messages?
+# When you’re logged out, are you prohibited from deleting messages?
+# When you’re logged in, are you prohibiting from adding a message as another user?
+# When you’re logged in, are you prohibiting from deleting a message as another user? 
 """Message View tests."""
 
 # run these tests like:
@@ -47,27 +53,43 @@ class MessageViewTestCase(TestCase):
         self.testuser = User.signup(username="testuser",
                                     email="test@test.com",
                                     password="testuser",
-                                    image_url=None)
+                                    image_url=None,
+                                    header_image_url=None)
 
         db.session.commit()
 
     def test_add_message(self):
-        """Can use add a message?"""
+        """Can user add a message?"""
 
         # Since we need to change the session to mimic logging in,
         # we need to use the changing-session trick:
 
-        with self.client as c:
-            with c.session_transaction() as sess:
-                sess[CURR_USER_KEY] = self.testuser.id
+        with self.client as client:
+            with client.session_transaction() as session:
+                session[CURR_USER_KEY] = self.testuser.id
 
             # Now, that session setting is saved, so we can have
             # the rest of ours test
 
-            resp = c.post("/messages/new", data={"text": "Hello"})
+            response = client.post("/messages/new", data={"text": "Hello"})
 
             # Make sure it redirects
-            self.assertEqual(resp.status_code, 302)
+            self.assertEqual(response.status_code, 302)
 
             msg = Message.query.one()
             self.assertEqual(msg.text, "Hello")
+
+    def test_delete_message(self):
+        """When you are logged in, can you delete a message as yourself?""" 
+
+        with self.client as client:
+            with client.session_transaction() as session:
+                session[CURR_USER_KEY] = self.testuser.id
+
+                msg = Message.query.one()
+
+                response = client.post(f'/messages/{msg.id}/delete')
+
+                self.assertEqual(response.status_code, 302)
+
+                self.assertNotIn(msg, self.testuser.messages)
