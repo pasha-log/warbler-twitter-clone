@@ -41,7 +41,7 @@
     <div class="col-lg-6 col-md-8 col-sm-12">
       <ul class="list-group" id="messages">
         {% for msg in messages %}
-          <li class="list-group-item">
+          <li class="list-group-item" id="{{ msg.id }}">
             <a href="/users/{{ msg.user.id }}">
               <img src="{{ msg.user.image_url }}" alt="" class="timeline-image">
             </a>
@@ -51,15 +51,21 @@
               <p>{{ msg.text }}</p>
             </div>
             {% if msg.user.id != g.user.id %}
-            <form method="POST" action="/messages/{{ msg.id }}/like" class="messages-like">
-              <button class="
-                btn 
-                btn-sm 
-                {{'btn-primary' if msg.id in likes else 'btn-secondary'}}"
+            <!-- method="POST" action="/messages/{{ msg.id }}/like" -->
+            <form method="POST" class="messages-like">
+              <button 
+              id="like-button-{{ msg.id }}" 
+              class="btn btn-sm {{'btn-primary' if msg.id in likes else 'btn-secondary'}}"
               >
                 <i class="fa fa-thumbs-up"></i> 
               </button>
             </form> 
+            <!-- <script>
+              const form = document.querySelector('.messages-like');
+              form.addEventListener('submit', () => {
+                fetch(`/messages/${msg.id}/like`)
+              });
+            </script> -->
             <a href="/messages/{{ msg.id  }}" id="message-link" class="btn btn-primary btn-sm">Detail</a>
             {% endif %}
           </li>

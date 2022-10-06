@@ -1,9 +1,3 @@
-# When you’re logged in, can you add a message as yourself?
-# When you’re logged in, can you delete a message as yourself?
-# When you’re logged out, are you prohibited from adding messages?
-# When you’re logged out, are you prohibited from deleting messages?
-# When you’re logged in, are you prohibiting from adding a message as another user?
-# When you’re logged in, are you prohibiting from deleting a message as another user? 
 """Message View tests."""
 
 # run these tests like:
@@ -45,8 +39,11 @@ class MessageViewTestCase(TestCase):
     def setUp(self):
         """Create test client, add sample data."""
 
-        User.query.delete()
-        Message.query.delete()
+        # User.query.delete()
+        # Message.query.delete()
+
+        db.drop_all() 
+        db.create_all() 
 
         self.client = app.test_client()
 
@@ -76,20 +73,74 @@ class MessageViewTestCase(TestCase):
             # Make sure it redirects
             self.assertEqual(response.status_code, 302)
 
-            msg = Message.query.one()
+            msg = Message.query.first()
             self.assertEqual(msg.text, "Hello")
 
     def test_delete_message(self):
         """When you are logged in, can you delete a message as yourself?""" 
 
+        msg1 = Message(id='7676', text="Hi", user_id=self.testuser.id)
+        db.session.add(msg1)
+        db.session.commit()
+
         with self.client as client:
             with client.session_transaction() as session:
                 session[CURR_USER_KEY] = self.testuser.id
 
-                msg = Message.query.one()
+            response = client.post('/messages/7676/delete', follow_redirects=True)
 
-                response = client.post(f'/messages/{msg.id}/delete')
+            self.assertEqual(response.status_code, 200)
 
-                self.assertEqual(response.status_code, 302)
+            msg = Message.query.get(7676)
 
-                self.assertNotIn(msg, self.testuser.messages)
+            self.assertIsNone(msg)
+    
+    def test_logged_out_adding_message(self):
+        """When you’re logged out, are you prohibited from adding messages?"""
+
+        with self.client as client:
+            response = client.post("/messages/new", data={"text": "Hi there"}, follow_redirects=True)
+            self.assertEqual(response.status_code, 200)
+            self.assertIn("Access unauthorized", str(response.data))
+
+    def test_logged_out_delete_message(self):
+        """When you are logged out, are you prohibited from deleting messages?""" 
+
+        msg2 = Message(id='8686', text="Hello there stranger", user_id=self.testuser.id)
+        db.session.add(msg2)
+        db.session.commit()
+
+        with self.client as client:
+            response = client.post('/messages/8686/delete', follow_redirects=True)
+            self.assertEqual(response.status_code, 200)
+            self.assertIn("Access unauthorized", str(response.data))
+
+    def test_add_message_as_another_user(self):
+        """When you are logged in, are you prohibiting from adding a message as another user?""" 
+
+        with self.client as client:
+            with client.session_transaction() as session:
+                session[CURR_USER_KEY] = 95639 # user does not exist
+
+            response = client.post("/messages/new", data={"text": "Hello"}, follow_redirects=True)
+            self.assertEqual(response.status_code, 200)
+            self.assertIn("Access unauthorized", str(response.data))
+
+    def test_delete_other_user_message(self):
+        """When you are logged in, are you prohibiting from deleting a message as another user?"""
+
+        msg3 = Message(id='9696', text="Hello there stranger", user_id=self.testuser.id)
+        db.session.add(msg3)
+        db.session.commit()
+
+        with self.client as client:
+            with client.session_transaction() as session:
+                session[CURR_USER_KEY] = 95639 
+
+            response = client.post('/messages/9696/delete', follow_redirects=True)
+            self.assertEqual(response.status_code, 200)
+            self.assertIn("Access unauthorized", str(response.data))
+
+            
+
+            
