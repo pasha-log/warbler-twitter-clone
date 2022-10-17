@@ -9,7 +9,7 @@ $(".messages-like").on("click", async function (evt) {
 
     const likeBtn = document.getElementById(`like-button-${msgId}`);
 
-    fetch(`${BASE_URL}/messages/${msgId}/like`, {method: 'POST'}).then((res) => 
+    fetch(`${BASE_URL}/messages/${msgId}/like`, {method: 'GET', method: 'POST'}).then((res) => 
     res.json()).then((data) => {
         if (data['liked'] === true) {
             likeBtn.className = "btn btn-sm btn-primary";
@@ -18,3 +18,26 @@ $(".messages-like").on("click", async function (evt) {
         }
     }).catch((e) => alert('Could not like post.'));
   });
+
+$(".user-like").on("click", async function (evt) {
+    evt.preventDefault();
+  
+    const $targ = $(evt.target);
+	const $closestLi = $targ.closest('li');
+	const msgId = $closestLi.attr('id');
+
+    const likeBtn = document.getElementById(`like-button-${msgId}`);
+
+    fetch(`${BASE_URL}/messages/${msgId}/like`, {method: 'GET', method: 'POST'}).then((res) => 
+    res.json()).then((data) => {
+        if (data['liked'] === true) {
+            likeBtn.className = "btn btn-sm btn-primary";
+        } else {
+            // likeBtn.className = "btn btn-sm btn-secondary";
+            // $('[id="ID of element"]').remove(); 
+            $(`#${msgId}`).remove()
+        }
+    }).catch((e) => alert('Could not like post.'));
+  });
+
+

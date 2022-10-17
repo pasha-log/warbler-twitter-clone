@@ -75,7 +75,7 @@ def signup():
                 password=form.password.data,
                 email=form.email.data,
                 image_url=form.image_url.data or User.image_url.default.arg,
-                header_image_url=form.header_image_url.data or User.header_image_url.default.arg,
+                header_image_url="/static/images/warbler-hero.jpg",
             )
             db.session.commit()
 
@@ -220,7 +220,6 @@ def show_likes(user_id):
     user = User.query.get_or_404(user_id)
     return render_template('users/likes.html', user=user, likes=user.likes)
 
-
 @app.route('/messages/<int:message_id>/like', methods=['GET', 'POST'])
 def add_like(message_id):
     """Toggle a liked message for the currently-logged-in user."""
@@ -235,16 +234,17 @@ def add_like(message_id):
 
     user_likes = g.user.likes
 
+    flag = False
     if liked_message in user_likes:
         g.user.likes = [like for like in user_likes if like != liked_message]
     else:
+        flag = True
         g.user.likes.append(liked_message)
 
     db.session.commit()
 
     # return redirect("/")
-    return jsonify({'liked': liked_message in user_likes})
-
+    return jsonify({'liked': flag})
 
 @app.route('/users/profile', methods=["GET", "POST"])
 def edit_profile():
